@@ -19,6 +19,7 @@ import numpy as np
 import os
 import sys
 import time
+import pytz
 import pandas as pd 
 from tqdm._tqdm_notebook import tqdm_notebook
 import pickle
@@ -37,7 +38,7 @@ import logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 logging.getLogger("tensorflow").setLevel(logging.ERROR)
 os.environ['TZ'] = 'Asia/Kolkata'  # to set timezone; needed when running on cloud
-time.tzset()
+#time.tzset()
 
 params = {
     "batch_size": 20,  # 20<16<10, 25 was a bust
@@ -48,7 +49,8 @@ params = {
 
 iter_changes = "dropout_layers_0.4_0.4"
 
-INPUT_PATH = PATH_TO_DRIVE_ML_DATA+"/inputs"
+PATH_TO_DRIVE_ML_DATA = "./"
+INPUT_PATH = PATH_TO_DRIVE_ML_DATA
 OUTPUT_PATH = PATH_TO_DRIVE_ML_DATA+"/outputs/lstm_best_7-3-19_12AM/"+iter_changes
 TIME_STEPS = params["time_steps"]
 BATCH_SIZE = params["batch_size"]
@@ -59,7 +61,7 @@ if not os.path.exists(OUTPUT_PATH):
     os.makedirs(OUTPUT_PATH)
     print("Directory created", OUTPUT_PATH)
 else:
-    raise Exception("Directory already exists. Don't override.")
+    print("Directory already exists. Don't override.")
 
 
 def print_time(text, stime):
@@ -107,7 +109,7 @@ print(os.listdir(INPUT_PATH))
 df_ge = pd.read_csv(os.path.join(INPUT_PATH, "ge.us.txt"), engine='python')
 print(df_ge.shape)
 print(df_ge.columns)
-display(df_ge.head(5))
+print(df_ge.head(5))
 tqdm_notebook.pandas('Processing...')
 # df_ge = process_dataframe(df_ge)
 print(df_ge.dtypes)
@@ -184,11 +186,11 @@ if model is None or is_update_model:
     r_lr_plat = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=30, 
                                   verbose=0, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0)
     
-    csv_logger = CSVLogger(os.path.join(OUTPUT_PATH, 'training_log_' + time.ctime().replace(" ","_") + '.log'), append=True)
+    #csv_logger = CSVLogger(os.path.join(OUTPUT_PATH, 'training_log_' + time.ctime().replace(" ","_") + '.log'), append=True)
     
     history = model.fit(x_t, y_t, epochs=params["epochs"], verbose=2, batch_size=BATCH_SIZE,
                         shuffle=False, validation_data=(trim_dataset(x_val, BATCH_SIZE),
-                        trim_dataset(y_val, BATCH_SIZE)), callbacks=[es, mcp, csv_logger])
+                        trim_dataset(y_val, BATCH_SIZE)), callbacks=[es, mcp])
     
     print("saving model...")
     pickle.dump(model, open("lstm_model", "wb"))
